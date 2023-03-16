@@ -4,6 +4,7 @@ import {FBXLoader} from 'three/examples/jsm/loaders/FBXLoader'
 import Stats from 'three/examples/jsm/libs/stats.module'
 
 const scene = new THREE.Scene()
+const clock = new THREE.Clock();
 
 const light = new THREE.PointLight()
 light.position.set(0.8, 1.4, 1.0)
@@ -16,7 +17,7 @@ const camera = new THREE.PerspectiveCamera(
     75,
     window.innerWidth / window.innerHeight,
     0.1,
-    1000
+    10000
 )
 camera.position.set(5.0, 5.0, 5.0)
 
@@ -28,12 +29,15 @@ const controls = new OrbitControls(camera, renderer.domElement)
 controls.enableDamping = true
 controls.target.set(0, 1, 0)
 
+let mixer;
 const fbxLoader = new FBXLoader()
 fbxLoader.load(
     'assets/models/bot.fbx',
     (object) => {
-        scene.add(object)
-        object.position.set(0, 0, 0)
+        scene.add(object);
+        mixer = new THREE.AnimationMixer(object);
+        const anim =  mixer.clipAction(object.animations[0]);
+        anim.play();
     },
     (xhr) => {
         console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
@@ -58,6 +62,7 @@ document.body.appendChild(stats.dom)
 function animate() {
     requestAnimationFrame(animate)
 
+    mixer.update(clock.getDelta());
     controls.update()
 
     render()
