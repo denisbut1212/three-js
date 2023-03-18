@@ -17,7 +17,7 @@ const camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera(
     10000
 );
 const controls: OrbitControls = new OrbitControls(camera, renderer.domElement);
-const light = new THREE.DirectionalLight(0xffffff, 10);
+const light: THREE.DirectionalLight = new THREE.DirectionalLight(0xffffff, 10);
 
 light.position.set(0, 3, 0);
 light.rotation.x = 0.5;
@@ -35,7 +35,7 @@ camera.rotation.set(-0.5, 0, 0);
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-let isLoaded: boolean = false;
+let isModelLoaded: boolean = false;
 let mixer: THREE.AnimationMixer;
 gltfLoader.load(pathToModel, (gltf) => {
 
@@ -48,11 +48,11 @@ gltfLoader.load(pathToModel, (gltf) => {
     mixer = new THREE.AnimationMixer(model);
 
     gltf.animations.forEach((clip) => {
-        let anim = mixer.clipAction(clip);
+        const anim = mixer.clipAction(clip);
         anim.play();
     })
 
-    isLoaded = true;
+    isModelLoaded = true;
 });
 
 function onWindowResize(): void {
@@ -69,7 +69,7 @@ function animate(): void {
     controls.update();
     stats.update();
 
-    if (isLoaded) {
+    if (isModelLoaded) {
         const deltaTime = clock.getDelta();
         mixer.update(deltaTime);
     }
