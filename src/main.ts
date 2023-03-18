@@ -3,23 +3,22 @@ import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
 import Stats from "three/examples/jsm/libs/stats.module";
 
-const pathToModel = 'assets/models/Red_Fab_zapek.glb';
+const pathToModel = './assets/models/Red_Fab_zapek.glb';
 
-const scene = new THREE.Scene();
-const stats = Stats();
-const renderer = new THREE.WebGLRenderer();
-const clock = new THREE.Clock();
-const gltfLoader = new GLTFLoader();
-const camera = new THREE.PerspectiveCamera(
+const scene: THREE.Scene = new THREE.Scene();
+const stats: Stats = Stats();
+const renderer: THREE.WebGLRenderer = new THREE.WebGLRenderer();
+const clock: THREE.Clock = new THREE.Clock();
+const gltfLoader: GLTFLoader = new GLTFLoader();
+const camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera(
     75,
     window.innerWidth / window.innerHeight,
     0.1,
     10000
 );
-const controls = new OrbitControls(camera, renderer.domElement)
+const controls: OrbitControls = new OrbitControls(camera, renderer.domElement)
 
 document.body.appendChild(stats.dom);
-
 
 controls.enableDamping = true;
 controls.target.set(1, 0, 0);
@@ -30,37 +29,45 @@ camera.rotation.set(-0.5, 0, 0);
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-let file = await gltfLoader.loadAsync(pathToModel);
-let model = file.scene;
-model.position.set(0, 0, 0)
-model.rotation.set(0, 60, 0)
+let isLoaded: boolean = false;
+let mixer: THREE.AnimationMixer;
+gltfLoader.load(pathToModel, (gltf) => {
 
-scene.add(model)
+    const model = gltf.scene;
+    model.position.set(0, 0, 0)
+    model.rotation.set(0, 60, 0)
 
-let mixer = new THREE.AnimationMixer(model);
+    scene.add(model)
 
-file.animations.forEach((clip) => {
-    let anim = mixer.clipAction(clip);
-    anim.play();
-})
+    mixer = new THREE.AnimationMixer(model);
 
-window.addEventListener('resize', onWindowResize, false);
+    gltf.animations.forEach((clip) => {
+        let anim = mixer.clipAction(clip);
+        anim.play();
+    })
 
-function onWindowResize() {
+    isLoaded = true;
+});
+
+function onWindowResize(): void {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.render(scene, camera);
 }
 
-function animate() {
+window.addEventListener('resize', onWindowResize, false);
+
+function animate(): void {
     requestAnimationFrame(animate);
     controls.update();
     stats.update();
-    mixer.update(clock.getDelta())
 
-    let deltaTime = clock.getDelta();
-    mixer.update(deltaTime);
+    if (isLoaded) {
+        const deltaTime = clock.getDelta();
+        mixer.update(deltaTime);
+    }
+
     renderer.render(scene, camera);
 }
 
