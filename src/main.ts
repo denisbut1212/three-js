@@ -3,7 +3,7 @@ import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
 import Stats from "three/examples/jsm/libs/stats.module";
 
-const pathToModel = './assets/models/Red_Fab_zapek.glb';
+const pathToModel = './assets/Red_Fab_zapek.glb';
 
 const scene: THREE.Scene = new THREE.Scene();
 const stats: Stats = Stats();
