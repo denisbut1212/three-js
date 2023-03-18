@@ -16,7 +16,13 @@ const camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera(
     0.1,
     10000
 );
-const controls: OrbitControls = new OrbitControls(camera, renderer.domElement)
+const controls: OrbitControls = new OrbitControls(camera, renderer.domElement);
+const light = new THREE.DirectionalLight(0xffffff, 10);
+
+light.position.set(0, 3, 0);
+light.rotation.x = 0.5;
+
+scene.add(light);
 
 document.body.appendChild(stats.dom);
 
