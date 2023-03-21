@@ -10,22 +10,26 @@
     WebGLRenderer
 } from "three";
 
+const divName: string = 'scene';
+const pathToSceneFile: string = './assets/app.json';
+
+// please do not modify this
+const mainModelName: string = 'Red_Fab_zapek.glb';
+
 let isLoaded: boolean;
 let scene: Scene;
 let camera: PerspectiveCamera;
 let mixer: AnimationMixer;
 
 const clock: Clock = new Clock();
-const pathToSceneFile: string = './assets/app.json';
-const mainModelName: string = 'Red_Fab_zapek.glb';
 
+const div: HTMLElement = document.getElementById(divName) as HTMLElement;
 const fileLoader: FileLoader = new FileLoader();
 const renderer: WebGLRenderer = new WebGLRenderer({antialias: true});
-renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setSize(div.clientWidth, div.clientHeight);
 renderer.outputEncoding = sRGBEncoding;
 
-document.body.appendChild<HTMLCanvasElement>(renderer.domElement);
+div.appendChild<HTMLCanvasElement>(renderer.domElement)
 
 fileLoader.load(pathToSceneFile, (text) => {
     LoadFromJson(JSON.parse(text as string));
@@ -47,7 +51,7 @@ function LoadFromJson(json: any): any {
     scene = objectLoader.parse<Scene>(json.scene);
 
     camera = objectLoader.parse<PerspectiveCamera>(json.camera);
-    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.aspect = div.clientWidth / div.clientHeight;
     camera.updateProjectionMatrix();
 
     const mainModel = scene.getObjectByName(mainModelName) as Object3D;
@@ -64,9 +68,9 @@ function LoadFromJson(json: any): any {
 }
 
 function onWindowResize(): void {
-    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.aspect = div.clientWidth / div.clientHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(div.clientWidth, div.clientHeight);
     renderer.render(scene, camera);
 }
 
