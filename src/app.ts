@@ -1,71 +1,47 @@
-﻿import {
-    AnimationMixer,
-    Clock,
-    FileLoader,
-    Object3D,
-    ObjectLoader,
-    PerspectiveCamera,
-    Scene,
-    sRGBEncoding,
-    WebGLRenderer
-} from "three";
+﻿import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader";
+import {AnimationMixer, Clock, PerspectiveCamera, Scene, sRGBEncoding, WebGLRenderer} from "three";
 
-const divName: string = 'scene';
-const pathToSceneFile: string = './assets/app.json';
+const divId: string = 'scene';
+const pathToModel = './assets/scene.gltf';
 
-// please do not modify this
-const mainModelName: string = 'Red_Fab_zapek.glb';
+const scene: Scene = new Scene();
+const renderer: WebGLRenderer = new WebGLRenderer();
+const clock: Clock = new Clock();
+const gltfLoader: GLTFLoader = new GLTFLoader();
+const div: HTMLElement = document.getElementById(divId) as HTMLElement;
+const camera: PerspectiveCamera = new PerspectiveCamera(
+    75,
+    div.clientWidth / div.clientHeight,
+    0.1,
+    10000
+);
+
+camera.position.set(0.5, 5, 7);
+camera.rotation.set(-0.5, 0, 0);
+
+renderer.setSize(div.clientWidth, div.clientHeight);
+renderer.setPixelRatio(div.clientWidth / div.clientHeight);
+renderer.outputEncoding = sRGBEncoding;
+div.appendChild(renderer.domElement);
 
 let isLoaded: boolean;
-let scene: Scene;
-let camera: PerspectiveCamera;
 let mixer: AnimationMixer;
+gltfLoader.load(pathToModel, (gltf) => {
 
-const clock: Clock = new Clock();
+    const model = gltf.scene;
+    model.rotation.set(0, 60, 0)
 
-const div: HTMLElement = document.getElementById(divName) as HTMLElement;
-const fileLoader: FileLoader = new FileLoader();
-const renderer: WebGLRenderer = new WebGLRenderer({antialias: true});
-renderer.setSize(div.clientWidth, div.clientHeight);
-renderer.outputEncoding = sRGBEncoding;
+    scene.add(model)
 
-div.appendChild<HTMLCanvasElement>(renderer.domElement)
+    mixer = new AnimationMixer(model);
 
-fileLoader.load(pathToSceneFile, (text) => {
-    LoadFromJson(JSON.parse(text as string));
-})
-
-function LoadFromJson(json: any): any {
-    const objectLoader: ObjectLoader = new ObjectLoader();
-    const project: any = json.project;
-
-    if (project.shadows !== undefined)
-        renderer.shadowMap.enabled = project.shadows;
-    if (project.shadowType !== undefined)
-        renderer.shadowMap.type = project.shadowType;
-    if (project.toneMapping !== undefined)
-        renderer.toneMapping = project.toneMapping;
-    if (project.toneMappingExposure !== undefined)
-        renderer.toneMappingExposure = project.toneMappingExposure;
-
-    scene = objectLoader.parse<Scene>(json.scene);
-
-    camera = objectLoader.parse<PerspectiveCamera>(json.camera);
-    camera.aspect = div.clientWidth / div.clientHeight;
-    camera.updateProjectionMatrix();
-
-    const mainModel = scene.getObjectByName(mainModelName) as Object3D;
-    mixer = new AnimationMixer(mainModel);
-
-    const animations = mainModel.animations;
-
-    animations.forEach(clip => {
-        const anim = mixer.clipAction(clip);
+    gltf.animations.forEach((clip) => {
+        let anim = mixer.clipAction(clip);
         anim.play();
     })
 
     isLoaded = true;
-}
+});
 
 function onWindowResize(): void {
     camera.aspect = div.clientWidth / div.clientHeight;
@@ -82,7 +58,8 @@ function animate(): void {
     if (!isLoaded)
         return;
 
-    mixer.update(clock.getDelta())
+    const deltaTime = clock.getDelta();
+    mixer.update(deltaTime);
     renderer.render(scene, camera);
 }
 
