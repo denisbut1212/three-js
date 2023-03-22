@@ -1,5 +1,4 @@
 ﻿import {GLTF, GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader";
-import {DRACOLoader} from "three/examples/jsm/loaders/DRACOLoader";
 import {
     AmbientLight,
     AnimationAction,
@@ -16,13 +15,10 @@ const divId: string = 'scene';
 const pathToModel: string = './assets/model.glb';
 const pathToCamera: string = './assets/camera.glb';
 
-const pathToDraco = 'node_modules/three/examples/jsm/libs/draco/';
-
 let scene: Scene;
 let renderer: WebGLRenderer;
 const clock: Clock = new Clock();
 const gltfLoader: GLTFLoader = new GLTFLoader();
-const dracoLoader: DRACOLoader = new DRACOLoader();
 const div: HTMLElement = document.getElementById(divId) as HTMLElement;
 const light = new AmbientLight(0xffffff);
 
@@ -43,11 +39,8 @@ function init(): void {
 
     window.addEventListener('resize', onWindowResize, false);
 
-    dracoLoader.setDecoderPath(pathToDraco);
-    gltfLoader.setDRACOLoader(dracoLoader);
     gltfLoader.load(pathToModel, onModelLoad);
     gltfLoader.load(pathToCamera, onCameraLoad);
-
 }
 
 function animate(): void {
@@ -65,6 +58,7 @@ function animate(): void {
 
 function setupRenderer(): void {
     renderer = new WebGLRenderer();
+    renderer.setClearColor(0x1a1a1a);
     renderer.setSize(div.clientWidth, div.clientHeight);
     renderer.setPixelRatio(div.clientWidth / div.clientHeight);
     renderer.outputEncoding = sRGBEncoding;
