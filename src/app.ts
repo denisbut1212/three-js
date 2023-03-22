@@ -1,13 +1,17 @@
 ﻿import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader";
-import {AnimationMixer, Clock, PerspectiveCamera, Scene, sRGBEncoding, WebGLRenderer} from "three";
+import {AmbientLight, AnimationMixer, Clock, PerspectiveCamera, Scene, sRGBEncoding, WebGLRenderer} from "three";
+import {DRACOLoader} from "three/examples/jsm/loaders/DRACOLoader";
 
 const divId: string = 'scene';
-const pathToModel = './assets/scene.gltf';
+const pathToModel = './assets/model.glb';
+
+const pathToDraco = 'node_modules/three/examples/jsm/libs/draco/';
 
 const scene: Scene = new Scene();
 const renderer: WebGLRenderer = new WebGLRenderer();
 const clock: Clock = new Clock();
 const gltfLoader: GLTFLoader = new GLTFLoader();
+const dracoLoader: DRACOLoader = new DRACOLoader();
 const div: HTMLElement = document.getElementById(divId) as HTMLElement;
 const camera: PerspectiveCamera = new PerspectiveCamera(
     75,
@@ -15,6 +19,9 @@ const camera: PerspectiveCamera = new PerspectiveCamera(
     0.1,
     10000
 );
+const light = new AmbientLight(0xffffff);
+
+scene.add(light);
 
 camera.position.set(0.5, 5, 7);
 camera.rotation.set(-0.5, 0, 0);
@@ -26,6 +33,8 @@ div.appendChild(renderer.domElement);
 
 let isLoaded: boolean;
 let mixer: AnimationMixer;
+dracoLoader.setDecoderPath(pathToDraco);
+gltfLoader.setDRACOLoader(dracoLoader);
 gltfLoader.load(pathToModel, (gltf) => {
 
     const model = gltf.scene;
