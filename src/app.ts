@@ -1,70 +1,76 @@
-﻿import {
+﻿import {GLTF, GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader";
+import {DRACOLoader} from "three/examples/jsm/loaders/DRACOLoader";
+import {
+    AmbientLight,
+    AnimationAction,
     AnimationMixer,
     Clock,
-    FileLoader,
-    Object3D,
-    ObjectLoader,
+    LoopOnce,
     PerspectiveCamera,
     Scene,
     sRGBEncoding,
     WebGLRenderer
 } from "three";
 
-const divName: string = 'scene';
-const pathToSceneFile: string = './assets/app.json';
+const divId: string = 'scene';
+const pathToModel: string = './assets/model.glb';
+const pathToCamera: string = './assets/camera.glb';
 
-// please do not modify this
-const mainModelName: string = 'Red_Fab_zapek.glb';
+const pathToDraco = 'node_modules/three/examples/jsm/libs/draco/';
+
+let scene: Scene;
+let renderer: WebGLRenderer;
+const clock: Clock = new Clock();
+const gltfLoader: GLTFLoader = new GLTFLoader();
+const dracoLoader: DRACOLoader = new DRACOLoader();
+const div: HTMLElement = document.getElementById(divId) as HTMLElement;
+const light = new AmbientLight(0xffffff);
 
 let isLoaded: boolean;
-let scene: Scene;
+let modelAnimationMixer: AnimationMixer;
+let cameraAnimationMixer: AnimationMixer;
 let camera: PerspectiveCamera;
-let mixer: AnimationMixer;
+let cameraAction: AnimationAction;
 
-const clock: Clock = new Clock();
+init();
+animate();
 
-const div: HTMLElement = document.getElementById(divName) as HTMLElement;
-const fileLoader: FileLoader = new FileLoader();
-const renderer: WebGLRenderer = new WebGLRenderer({antialias: true});
-renderer.setSize(div.clientWidth, div.clientHeight);
-renderer.outputEncoding = sRGBEncoding;
+function init(): void {
+    scene = new Scene();
+    scene.add(light);
 
-div.appendChild<HTMLCanvasElement>(renderer.domElement)
+    setupRenderer();
 
-fileLoader.load(pathToSceneFile, (text) => {
-    LoadFromJson(JSON.parse(text as string));
-})
+    window.addEventListener('resize', onWindowResize, false);
 
-function LoadFromJson(json: any): any {
-    const objectLoader: ObjectLoader = new ObjectLoader();
-    const project: any = json.project;
+    dracoLoader.setDecoderPath(pathToDraco);
+    gltfLoader.setDRACOLoader(dracoLoader);
+    gltfLoader.load(pathToModel, onModelLoad);
+    gltfLoader.load(pathToCamera, onCameraLoad);
 
-    if (project.shadows !== undefined)
-        renderer.shadowMap.enabled = project.shadows;
-    if (project.shadowType !== undefined)
-        renderer.shadowMap.type = project.shadowType;
-    if (project.toneMapping !== undefined)
-        renderer.toneMapping = project.toneMapping;
-    if (project.toneMappingExposure !== undefined)
-        renderer.toneMappingExposure = project.toneMappingExposure;
+}
 
-    scene = objectLoader.parse<Scene>(json.scene);
+function animate(): void {
+    requestAnimationFrame(animate);
 
-    camera = objectLoader.parse<PerspectiveCamera>(json.camera);
-    camera.aspect = div.clientWidth / div.clientHeight;
-    camera.updateProjectionMatrix();
+    if (!isLoaded)
+        return;
 
-    const mainModel = scene.getObjectByName(mainModelName) as Object3D;
-    mixer = new AnimationMixer(mainModel);
+    const deltaTime = clock.getDelta();
+    modelAnimationMixer.update(deltaTime);
+    cameraAnimationMixer.update(deltaTime);
 
-    const animations = mainModel.animations;
+    renderer.render(scene, camera);
+}
 
-    animations.forEach(clip => {
-        const anim = mixer.clipAction(clip);
-        anim.play();
-    })
+function setupRenderer(): void {
+    renderer = new WebGLRenderer();
+    renderer.setSize(div.clientWidth, div.clientHeight);
+    renderer.setPixelRatio(div.clientWidth / div.clientHeight);
+    renderer.outputEncoding = sRGBEncoding;
+    renderer.domElement.addEventListener('pointerup', OnPointerUp);
 
-    isLoaded = true;
+    div.appendChild(renderer.domElement);
 }
 
 function onWindowResize(): void {
@@ -74,16 +80,32 @@ function onWindowResize(): void {
     renderer.render(scene, camera);
 }
 
-window.addEventListener('resize', onWindowResize, false);
+function onModelLoad(gltf: GLTF): void {
+    const model = gltf.scene;
 
-function animate(): void {
-    requestAnimationFrame(animate);
+    scene.add(model)
 
-    if (!isLoaded)
-        return;
+    modelAnimationMixer = new AnimationMixer(model);
 
-    mixer.update(clock.getDelta())
-    renderer.render(scene, camera);
+    gltf.animations.forEach((clip) => {
+        const anim = modelAnimationMixer.clipAction(clip);
+        anim.play();
+    })
+
+    isLoaded = true;
 }
 
-animate();
+function onCameraLoad(gltf: GLTF): void {
+    camera = gltf.cameras[0] as PerspectiveCamera;
+    scene.add(camera);
+
+    cameraAnimationMixer = new AnimationMixer(camera);
+    const clip = gltf.animations[0];
+    cameraAction = cameraAnimationMixer.clipAction(clip);
+    cameraAction.setLoop(LoopOnce, 0);
+    cameraAction.clampWhenFinished = true;
+}
+
+function OnPointerUp(): void {
+    cameraAction.play();
+}
